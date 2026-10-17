@@ -37,6 +37,7 @@ def load_config():
         "price_per_day": 1,        # рублей за день (для текста в боте; авто-оплаты нет)
         "bot_username": "",        # @имя_бота без @ (для ссылки на экране активации; необязательно)
         "latest_version": "",
+        "tg_api": "https://api.telegram.org",  # база Telegram API; на сервере в РФ меняем на Cloudflare-релей
     }
     f = os.path.join(HERE, "kbt.conf")
     if os.path.exists(f):
@@ -51,6 +52,7 @@ def load_config():
     if env("PRICE_PER_DAY"):  cfg["price_per_day"] = int(env("PRICE_PER_DAY"))
     if env("BOT_USERNAME"):   cfg["bot_username"] = env("BOT_USERNAME").lstrip("@")
     if env("LATEST_VERSION"): cfg["latest_version"] = env("LATEST_VERSION")
+    if env("TG_API"):         cfg["tg_api"] = env("TG_API").rstrip("/")
     if isinstance(cfg["admin_ids"], (int, str)):
         cfg["admin_ids"] = [int(x) for x in re.findall(r"\d+", str(cfg["admin_ids"]))]
     return cfg
@@ -180,7 +182,7 @@ def run_http():
     ThreadingHTTPServer(("0.0.0.0", CFG["port"]), Api).serve_forever()
 
 # ===================== TELEGRAM =====================
-API = "https://api.telegram.org/bot{t}/{m}"
+API = CFG["tg_api"] + "/bot{t}/{m}"
 def tg(method, **params):
     data = urllib.parse.urlencode({k: (json.dumps(v) if isinstance(v, (dict, list)) else v)
                                    for k, v in params.items() if v is not None}).encode()
