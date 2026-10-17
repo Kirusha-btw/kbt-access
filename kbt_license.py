@@ -183,10 +183,13 @@ def run_http():
 
 # ===================== TELEGRAM =====================
 API = CFG["tg_api"] + "/bot{t}/{m}"
+# браузерный User-Agent: иначе Cloudflare (релей) режет запросы Python как «бота» (403)
+TG_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 def tg(method, **params):
     data = urllib.parse.urlencode({k: (json.dumps(v) if isinstance(v, (dict, list)) else v)
                                    for k, v in params.items() if v is not None}).encode()
-    req = urllib.request.Request(API.format(t=CFG["bot_token"], m=method), data=data)
+    req = urllib.request.Request(API.format(t=CFG["bot_token"], m=method), data=data,
+                                 headers={"User-Agent": TG_UA, "Accept": "application/json, text/plain, */*"})
     try:
         with urllib.request.urlopen(req, timeout=60, context=ssl.create_default_context()) as r:
             return json.loads(r.read().decode("utf-8"))
